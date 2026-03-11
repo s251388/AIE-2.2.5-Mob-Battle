@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <Windows.h>
-#include <functional>
+#include <string>
 
 using namespace std;
 
@@ -33,8 +33,18 @@ struct Mob {
 void Fight(Mob& User, Mob& Target) {
 
 	AttackData* Chosen = &(User.AttackList[rand() % User.AttackList.size()]);			// Randomly picks an attack stored in the mob's AttackList vector
-	cout << User.MobName << " used " << Chosen->Name << endl;
-	Sleep(500);
+	string UsedAttack = User.MobName + " used " + Chosen->Name;
+	cout << UsedAttack << "\n\n\n\033[3A\033[" << UsedAttack.length() << "C";
+	// The above \033[2A is a special ANSI code that sends the console cursor a specified number of rows back, i do this to make it
+	// pre-print a couple of extra newlines and then go back to the earlier empty rows to make the delayed printing more pleasant.
+
+	Sleep(250);
+	cout << ".";
+	Sleep(250);
+	cout << ".";
+	Sleep(250);
+	cout << "." << endl;
+	Sleep(250);
 
 	if (rand() % 100 < Chosen->Acc * Target.Openness) {			// Calculates whether attack landed, influenced by target's Posture
 
@@ -96,7 +106,7 @@ int main()
 	AttackData Fireball{	"Fireball",		80,		70,		1,		1,			""};
 	AttackData Thunder{		"Thunder",		150,	80,		1.3f,	1.3f,		""};
 	AttackData DenseFog{	"Dense Fog",	0,		200,	0.5f,	1,			" cloaks the area in a dense fog"};
-	AttackData SharpRoot{	"Sharp Root",	100,	80,		1,		1,			""};
+	AttackData SharpRoot{	"Sharp Roots",	100,	80,		1,		1,			""};
 
 	// Typically an attack that is easier to connect into another attack (like swinging claws or a sword) doesn't punish a miss as hard
 
@@ -106,30 +116,34 @@ int main()
 	Mob Mage{		"Mage",		800,		{Focus, Earthquake, Fireball, Thunder, DenseFog} };
 	Mob Bandit{		"Bandit",	800,		{Punch, SwordSlash, Lunge, Caution, RockThrow} };
 	Mob Goblin{		"Goblin",	600,		{Scratch, Punch, RockThrow, Thrash, Lunge} };
-	Mob Ent{		"Ent",		2000,		{Earthquake, DenseFog, SharpRoot} };
+	Mob Ent{		"Treant",	2000,		{Earthquake, DenseFog, SharpRoot} };
 	Mob Basilisk{	"Basilisk",	1500,		{Focus, Lunge, Thrash} };
+	
+	// This could probably be shortened to only initialise the chosen fighters?
 
 
 	string Response;
 	bool Swap = false;
+	int Turns = 0;
 
+	vector<Mob*> Order {&Knight, &Mage, &Bandit, &Goblin, &Ent, &Basilisk};
 
-	vector<Mob> Order {Knight, Mage, Bandit, Goblin, Ent, Basilisk};
-
-	Mob* FighterA = &Order[rand() % 6];
-	Mob* FighterB = &Order[0];
+	Mob* FighterA = Order[rand() % 6];
+	Mob* FighterB = Order[0];
 	do {
-		FighterB = &Order[rand() % 6];
+		FighterB = Order[rand() % 6];			// Randomly selects a fighter from the list, retrying if the same fighter is picked twice
 	} while (FighterA == FighterB);
 
-	cout << "==============================\n" << FighterA->MobName << "     vs     " << FighterB->MobName << endl;
+	cout << "===================================\n    " << FighterA->MobName << "	vs	" << FighterB->MobName << endl;
 
 	do {
 
-		cout << "==============================" << endl;
+		Turns++;
+
+		cout << "===================================" << endl;		// One-time flourish to show who the battle is between
 		cout << FighterA->MobName << ": " << FighterA->Health << "HP" << endl << FighterB->MobName << ": " << FighterB->Health << "HP\n" << endl;
 
-		if (Swap == true) {
+		if (Swap == true) {							// This alternates between who is attacking who
 			Fight(*FighterA, *FighterB);
 		}
 		else {
@@ -138,9 +152,9 @@ int main()
 
 		Swap = !Swap;
 
-		Sleep(1000);
+		Sleep(500);
 
-	} while (FighterA->Health > 0 && FighterB->Health > 0);
+	} while (FighterA->Health > 0 && FighterB->Health > 0);			// Checks if either fighter reaches below 0 health
 
 	string Winner;
 
@@ -151,7 +165,6 @@ int main()
 		Winner = FighterB->MobName;
 	}
 
-	cout << "\n	*# " << Winner << " wins! #*" << endl;
+	cout << "\n\n\n	\033[1m\033[33m*# " << Winner << " wins! #*\033[90m\n\n\n      (battle took " << Turns << " turns)\033[0m" << endl;
 
 }
-
